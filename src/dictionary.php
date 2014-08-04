@@ -12,6 +12,8 @@
  */
 function parseDictionary( $Filename )
 {
+	profilerStart( __FUNCTION__ );
 	$words = file( $Filename, FILE_IGNORE_NEW_LINES );
+	profilerStop( __FUNCTION__ );
 	return $words;
 }

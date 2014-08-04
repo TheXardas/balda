@@ -1,107 +1,34 @@
 <?php
-	session_start();
-if ( $_GET['reset'] ) {
-	$_SESSION['gameField'] = NULL;
-	$_SESSION['startWord'] = NULL;
-}
-
+/** @var $start int Application start time for profiling purposes  */
 	$start = microtime(true);
+
+	session_start();
+
+	require_once('../src/config.php');
+/** @var string[] $dictionary */
+
+/** Reset game field if user wishes so */
+	if ( ! empty( $_GET['reset'] ) ) {
+		resetGame();
+	}
+
+	$gameField = getGameField( $dictionary );
 ?>
 <html>
 <head>
 	<meta charset="utf-8">
-	<title>test</title>
-	<style type="text/css">
-		.table
-		{
-			display: table;
-			width: auto;
-			background-color: #eee;
-			border: 1px solid #666666;
-			/* border-collapse: separate;*/
-		}
-
-		.row
-		{
-			display: table-row;
-			width: auto;
-		}
-
-		.cell
-		{
-			float: left;
-			display: table-column;
-			width: 20px;
-			height: 20px;
-			background-color: #ccc;
-			border: dotted 1px gray;
-			text-align: center;
-			cursor: default;
-		}
-			.select-mode .cell {
-				cursor: pointer;
-			}
-
-			.cell.clickable {
-				cursor: pointer;
-			}
-
-			.cell.custom {
-				color: blue;
-			}
-
-			.cell.selected {
-				background: orange;
-			}
-
-		.letter-input {
-			height: 100%;
-			width: 100%;
-			padding: 0;
-			border: none;
-			text-align: center;
-		}
-	</style>
-	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-	<script src="/js/game.js"></script>
+	<title>Балда</title>
+	<link rel="stylesheet" type="text/css" href="/css/game.css" />
+	<script src="/js/jquery.min.js"></script>
 </head>
-
-<?php
-require_once('../src/config.php');
-/** @var string[] $dictionary
- */
-
-if ( empty( $_SESSION['gameField'] ) )
-{
-// Empty game field
-	$gameField = [
-		['', '', '', '', ''],
-		['', '', '', '', ''],
-		['', '', '', '', ''],
-		['', '', '', '', ''],
-		['', '', '', '', ''],
-	];
-
-	$startWord = getStartWord( $dictionary );
-	for ( $i = 0; $i < 5; $i++ ) {
-		$gameField[2][$i] = mb_substr( $startWord, $i, 1, 'utf8' );
-	}
-
-	$_SESSION['gameField'] = $gameField;
-}
-
-$gameField = $_SESSION['gameField'];
-
-?>
-
 <body>
 	<h5></h5>
 	<div class="wrapper">
-		<div class="table">
-			<? foreach ( $gameField as $row ) : ?>
+		<div class="table game-field">
+			<? foreach ( $gameField as $y => $row ) : ?>
 				<div class="row">
-					<? foreach ( $row as $cell ) : ?>
-						<div class="cell <?= ! $cell ? 'clickable' : '' ?>" >
+					<? foreach ( $row as $x => $cell ) : ?>
+						<div data-x="<?= $x ?>" data-y="<?= $y ?>" class="cell <?= ! $cell ? 'clickable' : '' ?>" >
 							<?= $cell ?>
 						</div>
 					<? endforeach ?>
@@ -109,13 +36,67 @@ $gameField = $_SESSION['gameField'];
 			<? endforeach ?>
 		</div>
 	</div>
+	<span class="selected-word"></span><br/>
+	<div class="inputs"></div>
 
-	<script type="text/javascript">
-		attachGameEvents();
-	</script>
+	<? // Отображаем ошибку, если есть ?>
+	<? if ( ! empty( $_SESSION['error'] ) ) : ?>
+		<span class="error"><?= $_SESSION['error'] ?></span>
+		<? unset( $_SESSION['error'] ) ?>
+	<? endif ?>
 
-	Time: <?php echo (microtime(true) - $start) * 1000; ?><br/>
-	<a href="/?reset=1">Reset</a>
 
+	<? // Таблица с очками ?>
+	<h4>Очки:</h4>
+	<table class="scores">
+		<thead>
+			<tr>
+				<th>
+					Вы
+				</th>
+				<th>
+					<?= getComputerName() ?>
+				</th>
+			</tr>
+		</thead>
+		<tbody>
+			<? $playerScores = $computerScores = 0; ?>
+			<? foreach ( getScoredWords() as $key => $scores ) : ?>
+				<tr>
+				<? $score = mb_strlen( $scores['player'], 'utf8' ) ?>
+				<? $playerScores += $score; ?>
+				<td>
+					<?= $scores['player'].' ('.$score.')' ?>
+				</td>
+				<? if ( $scores['computer'] ) : ?>
+					<? $score = mb_strlen( $scores['computer'], 'utf8' ) ?>
+					<? $computerScores += $score; ?>
+					<td>
+						<?= $scores['computer'].' ('.$score.')' ?>
+					</td>
+				<? else: ?>
+					<td></td>
+				<? endif ?>
+			<? endforeach ?>
+		</tbody>
+		<tfoot>
+			<tr>
+				<th>
+					<?= $playerScores ?>
+				</th>
+				<th>
+					<?= $computerScores ?>
+				</th>
+			</tr>
+		</tfoot>
+	</table>
+
+
+	<br/>
+	<a href="/?reset=1">Заново!</a><br/>
+	<br/>
+	Script time: <?php echo round( (microtime(true) - $start) * 1000, 0); ?> ms<br/>
+	<script src="/js/game.js"></script>
+	<? outputProfileInfo() ?>
 </body>
 </html>
