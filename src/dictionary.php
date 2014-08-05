@@ -31,10 +31,7 @@ function getDictionaryTree( $Dictionary )
 
 // Пробуем достать дерево из кэша (сессии)
 	$tree = false;
-	if ( ! empty( $_SESSION['dictionaryTree'] ) ) {
-		$tree = $_SESSION['dictionaryTree'];
-	}
-
+	$tree = cacheGet( __FUNCTION__ );
 	if ( $tree && is_array( $tree ) && ! empty( $tree ) )
 	{
 		profilerStop( __FUNCTION__ );
@@ -51,7 +48,7 @@ function getDictionaryTree( $Dictionary )
 			#$tree = unserialize( gzuncompress( $encodedTree ) );
 			if ( is_array( $tree ) && ! empty( $tree ) )
 			{
-				$_SESSION['dictionaryTree'] = $tree;
+				cacheSet( __FUNCTION__, $tree );
 				profilerStop( __FUNCTION__ );
 				return $tree;
 			}
@@ -104,7 +101,7 @@ function getDictionaryTree( $Dictionary )
 	$encodedTree = gzcompress( serialize( $tree ) );
 
 // Сначала в сессию
-	$_SESSION['dictionaryTree'] = $tree;
+	cacheSet( __FUNCTION__, $tree );
 
 // Теперь и в файл
 	file_put_contents( $cacheFileName, $encodedTree );

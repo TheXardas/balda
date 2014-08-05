@@ -7,8 +7,9 @@
 // TODO избавиться от global. Singleton без ООП?
 global $connection;
 
-$connection = new Memcached();
-$connection->addServer( 'localhost', 11211 );
+$connection = null;
+#$connection = new Memcached();
+//$connection->addServer( 'localhost', 11211 );
 
 /**
  *
@@ -16,8 +17,8 @@ $connection->addServer( 'localhost', 11211 );
  */
 function cacheSet( $Key, $Value )
 {
-	global $connection;
-	return $connection->set( $Key, $Value );
+	$Value = '<?php return '.var_export( $Value, true ).';';
+	file_put_contents( SRC_ROOT.'dictionary/dictionaryExport.php', $Value );
 }
 
 /**
@@ -25,12 +26,14 @@ function cacheSet( $Key, $Value )
  */
 function cacheGet( $Key )
 {
-	global $connection;
-	return $connection->get( $Key );
+	$value = include( SRC_ROOT.'dictionary/dictionaryExport.php');
+	return $value;
+	//global $connection;
+	//return $connection->get( $Key );
 }
 
 function cacheError()
 {
-	global $connection;
-	echo $connection->getResultCode().' '.$connection->getResultMessage();
+	//global $connection;
+	//echo $connection->getResultCode().' '.$connection->getResultMessage();
 }
