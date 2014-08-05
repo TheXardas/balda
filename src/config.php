@@ -5,7 +5,8 @@ define('SRC_ROOT', '../src/');
 require_once(SRC_ROOT.'dictionary.php');
 require_once(SRC_ROOT.'cache.php');
 require_once(SRC_ROOT.'game.php');
+require_once(SRC_ROOT.'computer.php');
 
 define('PROFILER_ENABLED', true);
 require_once(SRC_ROOT.'profiler.php');
-$dictionary = parseDictionary('../src/dictionary.txt');
+$dictionary = parseDictionary(SRC_ROOT.'dictionary/dictionary.txt');

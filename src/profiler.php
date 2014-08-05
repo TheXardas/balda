@@ -35,6 +35,8 @@ function outputProfileInfo()
 		foreach ( $_SESSION[PROFILER_PREFIX_FINISHED] as $key => $time ) {
 			$info .= "<b>$key:</b> $time ms<br/>";
 		}
+		$info .= '<b>Memory:</b> '.round( memory_get_peak_usage( true ) / 1024 / 10124, 2 ).' MB<br/>';
+
 		$_SESSION[PROFILER_PREFIX_FINISHED] = array();
 		echo $info;
 	}

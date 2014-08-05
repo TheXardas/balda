@@ -1,7 +1,4 @@
 <?php
-	/** @var $start int Application start time for profiling purposes  */
-	$start = microtime(true);
-
 	session_start();
 
 	require_once('../src/config.php');

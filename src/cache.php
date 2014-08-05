@@ -1,32 +1,36 @@
 <?php
 /**
- * Helper-functions, working with dictionary
+ * Cache functions
  */
 //===============================================
 
-/**
- * @return Memcached
- */
-function cacheConnect()
-{
-	$connection = new Memcached();
-	$connection->addServer( 'localhost', 11211 );
-	return $connection;
-}
+// TODO избавиться от global. Singleton без ООП?
+global $connection;
+
+$connection = new Memcached();
+$connection->addServer( 'localhost', 11211 );
 
 /**
  *
  * @return string
  */
-function cacheSet( Memcached $Connection, $Key, $Value )
+function cacheSet( $Key, $Value )
 {
-	return $Connection->set( $Key, $Value );
+	global $connection;
+	return $connection->set( $Key, $Value );
 }
 
 /**
  * @param $Key
  */
-function cacheGet( Memcached $Connection, $Key )
+function cacheGet( $Key )
 {
-	return $Connection->get( $Key );
+	global $connection;
+	return $connection->get( $Key );
+}
+
+function cacheError()
+{
+	global $connection;
+	echo $connection->getResultCode().' '.$connection->getResultMessage();
 }
