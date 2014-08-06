@@ -2,9 +2,8 @@
 	session_start();
 
 	require_once('../src/config.php');
-/** @var string[] $dictionary */
 
-	$gameField = getGameField( $dictionary );
+	$gameField = getGameField();
 
 if ( $_POST && ! empty( $_POST['word'] ) )
 {
@@ -14,7 +13,7 @@ if ( $_POST && ! empty( $_POST['word'] ) )
 	{
 		profilerStart( 'accepting user answer' );
 		try {
-			acceptCells( $dictionary, $wordCells );
+			acceptCells( $wordCells );
 		}
 		catch ( LogicException $e ){
 			$_SESSION['error'] = $e->getMessage();

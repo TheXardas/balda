@@ -1,18 +1,17 @@
 <?php
-/** @var $start int Application start time for profiling purposes  */
+/** @var $start int Время запуска приложения */
 	$start = microtime(true);
 
 	session_start();
 
 	require_once('../src/config.php');
-/** @var string[] $dictionary */
 
-/** Reset game field if user wishes so */
+/** Сбрасывает игру, если того захотел пользователь */
 	if ( ! empty( $_GET['reset'] ) ) {
 		resetGame();
 	}
 
-	$gameField = getGameField( $dictionary );
+	$gameField = getGameField();
 ?>
 <html>
 <head>
@@ -36,18 +35,22 @@
 			<? endforeach ?>
 		</div>
 	</div>
-	<span class="selected-word"></span><br/>
-	<div class="inputs"></div>
 
-	<? // Отображаем ошибку, если есть ?>
-	<? if ( ! empty( $_SESSION['error'] ) ) : ?>
-		<span class="error"><?= $_SESSION['error'] ?></span>
-		<? unset( $_SESSION['error'] ) ?>
-	<? endif ?>
+	<div class="interface">
+		<? // Отображаем ошибку, если есть ?>
+		<? if ( ! empty( $_SESSION['error'] ) ) : ?>
+			<span class="error"><?= $_SESSION['error'] ?></span>
+			<? unset( $_SESSION['error'] ) ?>
+		<? endif ?>
 
+		<span class="selected-word"></span><br/>
+		<a href="/?reset=1" class="reset-link">Заново!</a><br/>
+		<div class="inputs">
+
+		</div>
+	</div>
 
 	<? // Таблица с очками ?>
-	<h4>Очки:</h4>
 	<table class="scores">
 		<thead>
 			<tr>
@@ -92,11 +95,14 @@
 	</table>
 
 
-	<br/>
-	<a href="/?reset=1">Заново!</a><br/>
-	<br/>
-	Script time: <?php echo round( (microtime(true) - $start) * 1000, 0); ?> ms<br/>
-	<script src="/js/game.js"></script>
-	<? outputProfileInfo() ?>
+	<? if ( empty( $_SESSION['gameOver'] ) ) : ?>
+		<script src="/js/game.js"></script>
+	<? endif ?>
+
+	<? if ( ! isPlayerMove() ) : ?>
+		<script type="text/javascript">
+			window.location.href = '/computerMove.php';
+		</script>
+	<? endif ?>
 </body>
 </html>

@@ -1,12 +1,15 @@
 <?php
+$start = microtime(true);
 session_start();
 
+$end = microtime(true);
+echo $end-$start;
+
 require_once('../src/config.php');
-/** @var string[] $dictionary */
 
 profilerStart( 'generating computer move' );
 try {
-	computerMove( $dictionary );
+	computerMove();
 }
 catch ( LogicException $e ){
 	$_SESSION['error'] = $e->getMessage();

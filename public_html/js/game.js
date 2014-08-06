@@ -92,7 +92,7 @@ balda = {
 		this.mode = 'cell-selection';
 		balda.$el.removeClass('letter-input-mode interaction-disabled-mode').addClass('cell-selection-mode');
 		balda.$editableCell.text(balda.$letterInput.val()).addClass('custom');
-		$('<a href="#" class="remove-letter-link" title="Убирает выбранную букву">Отменить</a>').on('click', function(){
+		$('<button href="#" class="remove-letter-link" title="Убирает выбранную букву">Отменить</button>').on('click', function(){
 			balda.enableLetterInputMode();
 		}).prependTo($('.inputs'));
 	},

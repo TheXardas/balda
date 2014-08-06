@@ -4,21 +4,17 @@
  */
 //===============================================
 
-// TODO избавиться от global. Singleton без ООП?
-global $connection;
-
-$connection = null;
-#$connection = new Memcached();
-//$connection->addServer( 'localhost', 11211 );
-
 /**
  *
  * @return string
  */
-function cacheSet( $Key, $Value )
+function cacheSet( $Key, $Value, $FastOnly = false )
 {
-	$Value = '<?php return '.var_export( $Value, true ).';';
-	file_put_contents( SRC_ROOT.'dictionary/dictionaryExport.php', $Value );
+	$result = apc_store( $Key, bzcompress( serialize( $Value ) ) );
+	if ( $FastOnly ) {
+		return $result;
+	}
+	return fileCacheSet( $Key, $Value );
 }
 
 /**
@@ -26,14 +22,29 @@ function cacheSet( $Key, $Value )
  */
 function cacheGet( $Key )
 {
-	$value = include( SRC_ROOT.'dictionary/dictionaryExport.php');
-	return $value;
-	//global $connection;
-	//return $connection->get( $Key );
+// Сначала быстрый кэш
+	if ( $apcCache = apc_fetch( $Key ) ) {
+		return unserialize( bzdecompress( $apcCache ) );
+	}
+// Теперь из файла
+	elseif ( $fileCache = fileCacheGet( $Key ) )
+	{
+		cacheSet( $Key, $fileCache, true );
+		return $fileCache;
+	}
+	return NULL;
 }
 
-function cacheError()
+function fileCacheGet( $Key )
 {
-	//global $connection;
-	//echo $connection->getResultCode().' '.$connection->getResultMessage();
+	$fileName = SRC_ROOT.'dictionary/'.$Key.'.txt';
+	if ( file_exists( $fileName ) ) {
+		return unserialize( bzdecompress( file_get_contents( $fileName ) ) );
+	}
+	return null;
+}
+
+function fileCacheSet( $Key, $Value )
+{
+	return file_put_contents( SRC_ROOT.'dictionary/'.$Key.'.txt', bzcompress( serialize( $Value ) ) );
 }

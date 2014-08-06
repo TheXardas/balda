@@ -28,8 +28,8 @@
 {
     float: left;
     display: table-column;
-    width: 20px;
-    height: 20px;
+    width: 40px;
+    height: 40px;
     background-color: #ccc;
     border: dotted 1px gray;
     text-align: center;
@@ -74,10 +74,28 @@
     font-size: 1.5em;
 }
 
+.reset-link,
+.inputs button {
+    display: inline-block;
+}
+.interface {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100px;
+}
+
+.error {
+    margin-left: auto;
+    margin-right: auto;
+}
 .scores {
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 50px;
     border: 1px solid black;
     border-spacing: 0;
 }
     .scores td, .scores th {
         border: 1px solid black;
+        width: 100px;
     }

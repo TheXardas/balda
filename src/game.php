@@ -17,6 +17,7 @@ function resetGame()
 	$_SESSION['computerName'] = NULL;
 	$_SESSION['scores'] = NULL;
 	setIsPlayerMove( true );
+	$_SESSION['gameOver'] = NULL;
 
 	header('Location: /');
 // Force exit, so no output will be sent
@@ -32,10 +33,9 @@ function resetGame()
  *
  * Если игрового поля еще нет (или оно было сброшено), то сгенерируется новое.
  *
- * @param $Dictionary
  * @return array
  */
-function getGameField( $Dictionary )
+function getGameField()
 {
 	if ( ! empty( $_SESSION['gameField'] ) ) {
 		return $_SESSION['gameField'];
@@ -50,7 +50,7 @@ function getGameField( $Dictionary )
 		['', '', '', '', ''],
 	];
 
-	$startWord = getStartWord( $Dictionary );
+	$startWord = getStartWord();
 
 	for ( $i = 0; $i < 5; $i++ ) {
 		$gameField[2][$i] = mb_substr( $startWord, $i, 1, 'utf8' );
@@ -88,19 +88,20 @@ function cleanGameField()
  *
  * Возвращает случайное слово для начала игры
  *
- * @param $Dictionary
  * @return string
  * @throws Exception
  */
-function getStartWord( $Dictionary )
+function getStartWord()
 {
 	profilerStart( __FUNCTION__ );
-	shuffle( $Dictionary );
-	foreach ( $Dictionary as $word )
+
+	$dictionary = getWholeDictionary();
+	shuffle( $dictionary );
+	foreach ( $dictionary as $word )
 	{
 		if ( mb_strlen( $word, 'utf8' ) == 5 )
 		{
-			addUsedWord($word);
+			addUsedWord( $word );
 			profilerStop( __FUNCTION__ );
 			return $word;
 		}
@@ -115,20 +116,19 @@ function getStartWord( $Dictionary )
  * Каждый элемент массива - массив вида:
  * array(
  * // координаты клетки
- * 	x => 0,
- * 	y => 2,
+ *    x => 0,
+ *    y => 2,
  * // Является ли буква в этой ячейке новой
- * 	isNew => 1,
+ *    isNew => 1,
  * // Буква, которая находится в этой ячейке
- * 	letter => 'я',
+ *    letter => 'я',
  * )
  *
- * @param $Dictionary
- * @param $Cell
+ * @param $Cells
  * @return bool
  * @throws LogicException
  */
-function acceptCells( $Dictionary, $Cells )
+function acceptCells( $Cells )
 {
 	profilerStart( __FUNCTION__ );
 	if ( ! isPlayerMove() ) {
@@ -136,10 +136,10 @@ function acceptCells( $Dictionary, $Cells )
 	}
 
 	$word = '';
-	$gameField = getGameField( $Dictionary );
-	$lastX = null;
-	$lastY = null;
-	$newCell = null;
+	$gameField = getGameField();
+	$lastX = NULL;
+	$lastY = NULL;
+	$newCell = NULL;
 
 	foreach ( $Cells as $cell )
 	{
@@ -165,7 +165,7 @@ function acceptCells( $Dictionary, $Cells )
 
 		if ( $cell['isNew'] )
 		{
-			if ( ! is_null( $newLetter ) ) {
+			if ( ! is_null( $newCell ) ) {
 				throw new LogicException( 'За ход можно добавить только одну букву!' );
 			}
 			$newCell = $cell;
@@ -194,7 +194,7 @@ function acceptCells( $Dictionary, $Cells )
 	}
 
 	profilerStop( __FUNCTION__ );
-	return acceptWord( $Dictionary, $word, $newCell );
+	return acceptWord( $word, $newCell );
 }
 
 /**
@@ -203,13 +203,12 @@ function acceptCells( $Dictionary, $Cells )
  * Проверяет соответствие слова логике игры.
  * Если всё ок - засчитывает слово в пользу игрока.
  *
- * @param $Dictionary
  * @param $Word
  * @param $NewLetter
  * @return bool
  * @throws LogicException
  */
-function acceptWord( $Dictionary, $Word, $NewLetter )
+function acceptWord( $Word, $NewLetter )
 {
 	profilerStart( __FUNCTION__ );
 	$Word = trim( $Word );
@@ -218,7 +217,7 @@ function acceptWord( $Dictionary, $Word, $NewLetter )
 		throw new LogicException( 'Выбрано слишком короткое слово.' );
 	}
 
-	if ( ! in_array( $Word, $Dictionary ) ) {
+	if ( ! wordExists( $Word ) ) {
 		throw new LogicException( 'Нет такого слова!' );
 	}
 
@@ -226,7 +225,7 @@ function acceptWord( $Dictionary, $Word, $NewLetter )
 	addUsedWord( $Word );
 
 // Обновляем поле
-	$gameField = getGameField( $Dictionary );
+	$gameField = getGameField();
 	$x = $NewLetter['x'];
 	$y = $NewLetter['y'];
 	$gameField[$y][$x] = $NewLetter['letter'];
@@ -262,6 +261,22 @@ function addUsedWord( $Word )
 }
 
 /**
+ * isUsedWord
+ *
+ * Проверяет, не использовано ли уже переданное слово
+ *
+ * @param $Word
+ * @return bool
+ */
+function isUsedWord( $Word )
+{
+	if ( empty( $_SESSION['usedWords'] ) ) {
+		$_SESSION['usedWords'] = array();
+	}
+	return in_array( $Word, $_SESSION['usedWords'] );
+}
+
+/**
  * cleanUsedWords
  *
  * Очищает список использованных слов
@@ -293,7 +308,7 @@ function addPlayerScoredWord( $Word )
  */
 function addComputerScoredWord( $Word )
 {
-	$_SESSION['scores']['ai'][] = $Word;
+	$_SESSION['scores']['computer'][] = $Word;
 }
 
 /**
@@ -308,37 +323,15 @@ function getScoredWords()
 	$result = array();
 	if ( ! empty( $_SESSION['scores'] ) )
 	{
-		foreach ( $_SESSION['scores']['player'] as $key => $playerWord )
+		for ( $i = 0; $i < count( $_SESSION['scores']['player'] ); $i++ )
 		{
 			$result[] = array(
-				'player' => $playerWord,
-				'computer' => ! empty( $_SESSION['scores']['computer'] ) ?: ''
+				'player' => isset( $_SESSION['scores']['player'][$i] ) ? $_SESSION['scores']['player'][$i] : '',
+				'computer' => isset( $_SESSION['scores']['computer'][$i] ) ? $_SESSION['scores']['computer'][$i] : '',
 			);
 		}
 	}
 	return $result;
-}
-
-/**
- * getComputerName
- *
- * Возвращает имя компьютерного игрока.
- *
- * @return string
- */
-function getComputerName()
-{
-	if ( ! empty( $_SESSION['computerName'] ) ) {
-		return $_SESSION['computerName'];
-	}
-
-	$possibleNames = array(
-		'Игорь Долвич', 'Пятачок', 'Макс Пэйн', 'Пришелец', 'Фродо', 'Гарри Поттер', 'Вася Пупкин', 'Дарт Вейдер',
-		'Хан Соло', 'Лейтенант Керриган', 'Джим Рэйнор', 'Гордон Фримэн', 'Джек Потрошитель', 'Фредди Крюгер', 'Кот',
-	);
-	$key = array_rand( $possibleNames );
-	$_SESSION['computerName'] = $possibleNames[$key];
-	return $_SESSION['computerName'];
 }
 
 /**
@@ -351,7 +344,7 @@ function getComputerName()
  */
 function isPlayerMove()
 {
-	if ( empty( $_SESSION['isPlayerMove'] ) ) {
+	if ( ! isset( $_SESSION['isPlayerMove'] ) ) {
 		$_SESSION['isPlayerMove'] = true;
 	}
 	return $_SESSION['isPlayerMove'];

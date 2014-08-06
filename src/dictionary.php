@@ -3,121 +3,55 @@
  * Helper-functions, working with dictionary
  */
 //===============================================
+define('DICTIONARY_PATH', SRC_ROOT.'dictionary/dictionary.txt');
 
 /**
- * parseDictionary
+ * getWholeDictionary
  *
- * @param string $Filename — path to file
- * @return string
+ * Возвращает весь словарь массивом
+ *
+ * @return string[]
  */
-function parseDictionary( $Filename )
+function getWholeDictionary()
 {
 	profilerStart( __FUNCTION__ );
-	$words = file( $Filename, FILE_IGNORE_NEW_LINES );
+	if ( $words = cacheGet( __FUNCTION__ ) ) {
+		return $words;
+	}
+	$words = file( DICTIONARY_PATH, FILE_IGNORE_NEW_LINES );
+	cacheSet( __FUNCTION__, $words, true );
 	profilerStop( __FUNCTION__ );
 	return $words;
 }
 
 /**
- * getDictionaryTree
+ * wordExists
  *
- * Строит и возвращает словарное дерево.
+ * Проверяет, существует ли слово в словаре
  *
- * @param $Dictionary
+ * @param $Word string
+ * @return bool
  */
-function getDictionaryTree( $Dictionary )
+function wordExists( $Word )
 {
 	profilerStart( __FUNCTION__ );
-
-// Пробуем достать дерево из кэша (сессии)
-	$tree = false;
-	$tree = cacheGet( __FUNCTION__ );
-	if ( $tree && is_array( $tree ) && ! empty( $tree ) )
-	{
-		profilerStop( __FUNCTION__ );
-		return $tree;
+	$words = getWholeDictionary();
+	$result = false;
+	if ( in_array( $Word, $words ) ) {
+		$result = true;
 	}
-
-// Пробуем достать из файлового кэша
-	$cacheFileName = SRC_ROOT.'dictionary/dictionaryTree.txt';
-	if ( file_exists( $cacheFileName ) )
-	{
-		$encodedTree = file_get_contents( $cacheFileName );
-		if ( $encodedTree )
-		{
-			#$tree = unserialize( gzuncompress( $encodedTree ) );
-			if ( is_array( $tree ) && ! empty( $tree ) )
-			{
-				cacheSet( __FUNCTION__, $tree );
-				profilerStop( __FUNCTION__ );
-				return $tree;
-			}
-		}
-	}
-
-	$tree = array(
-	// строка, содержащая все возможные буквы, идущие после текущей
-		'letters' => '',
-	// массив указателей на следующие узлы дерева. Ключи — порядковый номер буквы из строки letters
-		'next' => array(),
-	// Строка, содержащее слово, которому соответствует данный узел с учетом всех предыдущих
-		'word' => NULL,
-	);
-
-	$count = 0;
-	// TODO вынести блок с генерацией дерева в отдельную функцию
-	foreach ( $Dictionary as $word )
-	{
-		$count++;
-		$currentNode = &$tree;
-		$wordLength = mb_strlen( $word, 'utf8' );
-		for ( $i = 0; $i < $wordLength; $i++ )
-		{
-			$letter = mb_substr( $word, $i, 1, 'utf8' );
-			$nextIndex = mb_strpos( $currentNode['letters'], $letter, null, 'utf8' );
-			if ( $nextIndex === false )
-			{
-			// такого узла еще нет, создаем:
-				$nextIndex = mb_strlen( $currentNode['letters'], 'utf8' );
-				$currentNode['next'][$nextIndex] = array(
-					'letters' => '',
-					'next' => array(),
-					'word' => NULL,
-				);
-
-			// Добавляем новую букву к возможным
-				$currentNode['letters'] .= $letter;
-
-			// Если это последняя буква в слове — записываем слово в узел
-				if ( $i == $wordLength - 1 ) {
-					$currentNode['next'][$nextIndex]['word'] = $word;
-				}
-			}
-			$currentNode = &$currentNode['next'][$nextIndex];
-		}
-	}
-
-// Кэшируем
-	$encodedTree = gzcompress( serialize( $tree ) );
-
-// Сначала в сессию
-	cacheSet( __FUNCTION__, $tree );
-
-// Теперь и в файл
-	file_put_contents( $cacheFileName, $encodedTree );
-
 	profilerStop( __FUNCTION__ );
-	return $tree;
+	return $result;
 }
 
 /**
- * getInvertedTree
- *
- * Строит и возвращает инвертированное дерево.
- *
- * @param $Dictionary
+ * getFileHandler
+ * @return resource
  */
-function getInvertedTree( $Dictionary )
+function getFileHandler()
 {
-	// TODO implement
+	profilerStart( __FUNCTION__ );
+	$handler = fopen( DICTIONARY_PATH, 'r' );
+	profilerStop( __FUNCTION__ );
+	return $handler;
 }
