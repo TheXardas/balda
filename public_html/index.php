@@ -104,5 +104,9 @@
 			window.location.href = '/computerMove.php';
 		</script>
 	<? endif ?>
+
+	<? if ( PROFILER_ENABLED ) : ?>
+		<? outputProfileInfo() ?>
+	<? endif ?>
 </body>
 </html>

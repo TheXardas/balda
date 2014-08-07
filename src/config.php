@@ -2,6 +2,7 @@
 ini_set('display_errors', 'on');
 error_reporting(E_ALL);
 define('SRC_ROOT', '../src/');
+#ini_set('memory_limit', '1024M');
 require_once(SRC_ROOT.'dictionary.php');
 require_once(SRC_ROOT.'cache.php');
 require_once(SRC_ROOT.'game.php');

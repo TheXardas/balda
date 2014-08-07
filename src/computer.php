@@ -47,17 +47,17 @@ function computerMove()
 				// Подставляем каждую букву алфавита
 					foreach ( $alphabet as $insertedLetter )
 					{
-						$index = mb_strpos( $invTree['letters'], $insertedLetter, NULL, 'utf8' );
+						$index = mb_strpos( $invTree[LETTERS], $insertedLetter, NULL, 'utf8' );
 						if ( $index === false ) continue;
 					// Подставляем букву прямо в ячейку
 						$gameField[$y][$x] = $insertedLetter;
-						$subTree = $invTree['next'][$index];
+						$subTree = $invTree[NEXT][$index];
 						$count = array();
 						$count[$y][$x] = 1;
 						$newLetter = array(
 							'y' => $y,
 							'x' => $x,
-							'letter' => $insertedLetter,
+							LETTERS => $insertedLetter,
 						);
 
 						$moreWords = computerFindWord( $gameField, $subTree, $y, $x, false, $tree, $newLetter, $count );
@@ -97,7 +97,7 @@ function computerMove()
 			$y = $bestLetterCoordinates['y'];
 			$x = $bestLetterCoordinates['x'];
 			$gameField = getGameField();
-			$gameField[$y][$x] = $bestLetterCoordinates['letter'];
+			$gameField[$y][$x] = $bestLetterCoordinates[LETTERS];
 			setGameField( $gameField );
 			addComputerScoredWord( $longestWord );
 			setIsPlayerMove( true );
@@ -136,34 +136,37 @@ function computerMove()
 function computerFindWord( $GameField, $Node, $Y, $X, $IsDictionaryTree, $DictionaryTree, $NewLetter, &$Count )
 {
 	$foundWords = array();
-	if ( ! is_null( $Node['word'] ) )
+	profilerStart('checking word'.$X.$Y);
+	if ( ! is_null( $Node[WORD] ) )
 	{
 		if ( $IsDictionaryTree )
 		{
 		// Если это словарное дерево, то мы нашли слово
-			$foundWords[$Node['word']] = $NewLetter;
+			$foundWords[$Node[WORD]] = $NewLetter;
 		}
 		else
 		{
 		// Инвертированное дерево
 			$dictNode = $DictionaryTree;
-			for ( $i = 0; $i < mb_strlen( $Node['word'], 'utf8' ); $i++ )
+			for ( $i = 0; $i < mb_strlen( $Node[WORD], 'utf8' ); $i++ )
 			{
-				$letter = mb_substr( $Node['word'], $i, 1, 'utf8' );
-				$j = mb_strpos( $dictNode['letters'], $letter, NULL, 'utf8' );
+				$letter = mb_substr( $Node[WORD], $i, 1, 'utf8' );
+				$j = mb_strpos( $dictNode[LETTERS], $letter, NULL, 'utf8' );
 
-				$dictNode = $dictNode['next'][$j];
+				$dictNode = $dictNode[NEXT][$j];
 			}
 		// Найден валидный префикс. Ищем по нему слово через словарное дерево
 			$subResult = computerFindWord( $GameField, $dictNode, $NewLetter['y'], $NewLetter['x'], true, $DictionaryTree, $NewLetter, $Count );
 			$foundWords = array_merge( $subResult, $foundWords );
 		}
 	}
+	profilerStop('checking word'.$X.$Y);
 
 // Итерируем все соседние клетки
 	$neighbours = array(
 		[$X+1, $Y], [$X-1, $Y], [$X, $Y+1], [$X, $Y-1]
 	);
+	profilerStart('neihbouring'.$X.$Y);
 	foreach ( $neighbours as $coordinates )
 	{
 		$nx = $coordinates[0];
@@ -179,7 +182,7 @@ function computerFindWord( $GameField, $Node, $Y, $X, $IsDictionaryTree, $Dictio
 		}
 
 	// Если буквы нет в "возможных следующих"
-		$subIndex = mb_strpos( $Node['letters'], $GameField[$ny][$nx], NULL, 'utf8' );
+		$subIndex = mb_strpos( $Node[LETTERS], $GameField[$ny][$nx], NULL, 'utf8' );
 		if ( $subIndex === false ) {
 			continue;
 		}
@@ -189,11 +192,12 @@ function computerFindWord( $GameField, $Node, $Y, $X, $IsDictionaryTree, $Dictio
 			continue;
 		}
 
-		$nextNode = $Node['next'][$subIndex];
+		$nextNode = $Node['n'][$subIndex];
 		$Count[$ny][$nx] = 1;
 		$subResult = computerFindWord( $GameField, $nextNode, $ny, $nx, $IsDictionaryTree, $DictionaryTree, $NewLetter, $Count );
 		$foundWords = array_merge( $subResult, $foundWords );
 	}
+	profilerStop('neihbouring'.$X.$Y);
 	return $foundWords;
 }
 

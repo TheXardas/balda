@@ -3,7 +3,7 @@
 define('PROFILER_PREFIX', '_profiler_');
 define('PROFILER_PREFIX_FINISHED', '_profiler_finished_');
 if ( ! defined( 'PROFILER_ENABLED' ) ) {
-	define( 'PROFILER_ENABLED', false );
+	define( 'PROFILER_ENABLED', true );
 }
 
 $_SESSION[PROFILER_PREFIX] = array();
@@ -41,9 +41,9 @@ function outputProfileInfo()
 		{
 			$time = $profile['time'];
 			$memory = $profile['memory'];
-			$info .= "<b>$key:</b> $time ms. Memory changed: ".round( $memory / 1024 / 10124, 2 ).' MB</br>';
+			$info .= "<b>$key:</b> $time ms. Memory changed: ".round( $memory / 1024 / 1024, 2 ).' MB</br>';
 		}
-		$info .= '<b>Memory:</b> '.round( memory_get_peak_usage( true ) / 1024 / 10124, 2 ).' MB<br/>';
+		$info .= '<b>Memory:</b> '.round( memory_get_peak_usage( true ) / 1024 / 1024, 2 ).' MB<br/>';
 
 		$_SESSION[PROFILER_PREFIX_FINISHED] = array();
 		echo $info;

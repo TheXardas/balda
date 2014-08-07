@@ -38,7 +38,6 @@ function cacheGet( $Key )
 function fileCacheGet( $Key )
 {
 // Временно вырубил файловый кэш для оптимизации по памяти
-	return null;
 	$fileName = SRC_ROOT.'dictionary/'.$Key.'.txt';
 	if ( file_exists( $fileName ) ) {
 		return unserialize( bzdecompress( file_get_contents( $fileName ) ) );

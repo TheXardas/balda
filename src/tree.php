@@ -3,6 +3,10 @@
  * Функции, работающие с деревьями
  */
 
+
+define('LETTERS', 0);
+define('NEXT', 1);
+define('WORD', 2);
 /**
  * getDictionaryTree
  *
@@ -22,11 +26,11 @@ function getDictionaryTree()
 
 	$tree = array(
 	// строка, содержащая все возможные буквы, идущие после текущей
-		'letters' => '',
-	// массив указателей на следующие узлы дерева. Ключи — порядковый номер буквы из строки letters
-		'next' => array(),
+		LETTERS => '',
+	// массив указателей на следующие узлы дерева. Ключи — порядковый номер буквы из строки s
+		NEXT => array(),
 	// Строка, содержащее слово, которому соответствует данный узел с учетом всех предыдущих
-		'word' => NULL,
+		WORD => NULL,
 	);
 
 	$count = 0;
@@ -40,26 +44,26 @@ function getDictionaryTree()
 		for ( $i = 0; $i < $wordLength; $i++ )
 		{
 			$letter = mb_substr( $word, $i, 1, 'utf8' );
-			$nextIndex = mb_strpos( $currentNode['letters'], $letter, NULL, 'utf8' );
+			$nextIndex = mb_strpos( $currentNode[LETTERS], $letter, NULL, 'utf8' );
 			if ( $nextIndex === false )
 			{
 			// такого узла еще нет, создаем:
-				$nextIndex = mb_strlen( $currentNode['letters'], 'utf8' );
-				$currentNode['next'][$nextIndex] = array(
-					'letters' => '',
-					'next' => array(),
-					'word' => NULL,
+				$nextIndex = mb_strlen( $currentNode[LETTERS], 'utf8' );
+				$currentNode[NEXT][$nextIndex] = array(
+					LETTERS => '',
+					NEXT => array(),
+					WORD => NULL,
 				);
 
 			// Добавляем новую букву к возможным
-				$currentNode['letters'] .= $letter;
+				$currentNode[LETTERS] .= $letter;
 
 			// Если это последняя буква в слове — записываем слово в узел
 				if ( $i == $wordLength - 1 ) {
-					$currentNode['next'][$nextIndex]['word'] = $word;
+					$currentNode[NEXT][$nextIndex][WORD] = $word;
 				}
 			}
-			$currentNode = &$currentNode['next'][$nextIndex];
+			$currentNode = &$currentNode[NEXT][$nextIndex];
 		}
 	}
 
@@ -89,11 +93,11 @@ function getInvertedTree()
 
 	$tree = array(
 		// строка, содержащая все возможные буквы, идущие после текущей
-		'letters' => '',
-		// массив указателей на следующие узлы дерева. Ключи — порядковый номер буквы из строки letters
-		'next' => array(),
+		LETTERS => '',
+		// массив указателей на следующие узлы дерева. Ключи — порядковый номер буквы из строки s
+		NEXT => array(),
 		// Строка, содержащее слово, которому соответствует данный узел с учетом всех предыдущих
-		'word' => NULL,
+		WORD => NULL,
 	);
 
 	// TODO вынести блок с генерацией дерева в отдельную функцию
@@ -116,30 +120,36 @@ function getInvertedTree()
 			foreach ( $previousNodes as $letterCount => &$node )
 			{
 				$count++;
-				$nextIndex = mb_strpos( $node['letters'], $letter, NULL, 'utf8' );
+				$nextIndex = mb_strpos( $node[LETTERS], $letter, NULL, 'utf8' );
 				if ( $nextIndex === false )
 				{
 				// такого узла еще нет, создаем:
-					$nextIndex = mb_strlen( $node['letters'], 'utf8' );
-					$node['next'][$nextIndex] = array(
-						'letters' => '',
-						'next' => array(),
-						'word' => NULL,
+					$nextIndex = mb_strlen( $node[LETTERS], 'utf8' );
+					$node[NEXT][$nextIndex] = array(
+						LETTERS => '',
+						NEXT => array(),
+						WORD => NULL,
 					);
 
 				// Добавляем новую букву к возможным
-					$node['letters'] .= $letter;
+					$node[LETTERS] .= $letter;
 
 				// Если это первая буква в слове — отмечаем узел как валидный префикс
 					if ( $i == 0 ) {
-						$node['next'][$nextIndex]['word'] = mb_substr( $prefix, 0, $letterCount + 1, 'utf8' );
+						$node[NEXT][$nextIndex][WORD] = mb_substr( $prefix, 0, $letterCount + 1, 'utf8' );
 					}
 				}
-				$currentNodes[] = &$node['next'][$nextIndex];
+				$currentNodes[] = &$node[NEXT][$nextIndex];
 			}
 			$previousNodes = $currentNodes;
 		}
 	}
+
+// Очищаем память от лишнего
+	unset( $dictionary );
+	unset( $previousNodes );
+	unset( $currentNodes );
+	unset( $node );
 
 	cacheSet( __FUNCTION__, $tree );
 
